@@ -239,37 +239,70 @@ const guest = () => {
       ]
     };
   };
+  // Map language names to JDoodle language IDs
+  const jdoodleLanguageMap = {
+    "python": "python3",
+    "javascript": "nodejs",
+    "cpp": "cpp",
+    "c": "c",
+    "java": "java",
+    "bash": "bash",
+    "kotlin": "kotlin",
+    "typescript": "typescript"
+  };
+
   async function runcode(c) {
     setrunning(true);
     setbottom(true);
 
-    const data = {
-      "language": currlng,
-      "version": currlngversion,
-      "files": [
-        {
-          "name": "",
-          "content": sample
-        }
-      ],
-      "stdin": input
-    }
-
-    const response = await fetch("https://emkc.org/api/v2/piston/execute", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    }).then(async (res) => {
-      const op = await res.json()
-      console.log("Response received is ", op.run.stdout);
-      setoutput(op.run.stdout.split('\n'));
-      console.log("OUTPUT is ", op.run.stdout.split('\n'));
-    }).catch(
-      (err) => {
-        console.log(err);
-
+    try {
+      const language = jdoodleLanguageMap[currlng] || "python3";
+      
+      // Call your API endpoint (works on production, points to JDoodle)
+      const res = await fetch("/api/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          "language": language,
+          "code": sample,
+          "stdin": input
+        }),
       });
-    setrunning(false);
+
+      if (!res.ok) {
+        console.error("API Error:", res.status);
+        setoutput([`Error: API request failed (${res.status})`]);
+        setrunning(false);
+        return;
+      }
+
+      const result = await res.json();
+      
+      // JDoodle returns: { output: "...", error: "...", statusCode: ... }
+      let outputLines = [];
+      
+      if (result.error && result.error.trim()) {
+        outputLines.push("ERROR:");
+        outputLines.push(result.error);
+      }
+      
+      if (result.output && result.output.trim()) {
+        outputLines.push(result.output);
+      }
+      
+      if (!result.output && !result.error) {
+        outputLines.push("Program executed successfully with no output");
+      }
+
+      console.log("Execution result:", result);
+      setoutput(outputLines.length > 0 ? outputLines : ["No output"]);
+      
+    } catch (err) {
+      console.error("Execution error:", err);
+      setoutput([`Error: ${err.message || "Failed to execute code"}`]);
+    } finally {
+      setrunning(false);
+    }
 
   }
 
