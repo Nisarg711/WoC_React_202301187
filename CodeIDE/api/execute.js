@@ -15,19 +15,41 @@ export default async function handler(req, res) {
   try {
     const { language, code, stdin } = req.body;
 
-    // Call OneCompiler API (no auth needed)
-    const onecompilerRes = await fetch('https://api.onecompiler.com/api/v1/code/exec', {
+    // Map language to Wandbox compiler ID
+    const compilerMap = {
+      'python': 'python3',
+      'javascript': 'nodejs',
+      'cpp': 'clang-head',
+      'c': 'clang-head',
+      'java': 'openjdk-head',
+      'bash': 'bash',
+      'kotlin': 'kotlin',
+      'typescript': 'nodejs'
+    };
+
+    const compiler = compilerMap[language] || 'python3';
+
+    // Call Wandbox API
+    const wandboxRes = await fetch('https://wandbox.org/api/compile.json', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        language: language,
+        compiler: compiler,
         code: code,
-        stdin: stdin || ''
+        stdin: stdin || '',
+        'compiler-option-raw': language === 'cpp' ? '-std=c++17' : ''
       })
     });
 
-    const data = await onecompilerRes.json();
-    return res.status(200).json(data);
+    const data = await wandboxRes.json();
+    
+    // Transform Wandbox response to match our format
+    const result = {
+      stdout: data.program_output || '',
+      stderr: data.compiler_error || data.error || ''
+    };
+    
+    return res.status(200).json(result);
   } catch (error) {
     console.error('Execution error:', error);
     return res.status(500).json({ error: error.message });
