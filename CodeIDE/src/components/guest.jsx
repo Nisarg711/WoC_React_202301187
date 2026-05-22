@@ -239,10 +239,10 @@ const guest = () => {
       ]
     };
   };
-  // Map language names to JDoodle language IDs
-  const jdoodleLanguageMap = {
-    "python": "python3",
-    "javascript": "nodejs",
+  // Map language names to OneCompiler language IDs
+  const onecompilerLanguageMap = {
+    "python": "python",
+    "javascript": "javascript",
     "cpp": "cpp",
     "c": "c",
     "java": "java",
@@ -256,9 +256,9 @@ const guest = () => {
     setbottom(true);
 
     try {
-      const language = jdoodleLanguageMap[currlng] || "python3";
+      const language = onecompilerLanguageMap[currlng] || "python";
       
-      // Call your API endpoint (works on production, points to JDoodle)
+      // Call your API endpoint (which proxies to OneCompiler)
       const res = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -278,19 +278,19 @@ const guest = () => {
 
       const result = await res.json();
       
-      // JDoodle returns: { output: "...", error: "...", statusCode: ... }
+      // OneCompiler returns: { stdout: "...", stderr: "..." }
       let outputLines = [];
       
-      if (result.error && result.error.trim()) {
-        outputLines.push("ERROR:");
-        outputLines.push(result.error);
+      if (result.stderr && result.stderr.trim()) {
+        outputLines.push("STDERR:");
+        outputLines.push(result.stderr);
       }
       
-      if (result.output && result.output.trim()) {
-        outputLines.push(result.output);
+      if (result.stdout && result.stdout.trim()) {
+        outputLines.push(result.stdout);
       }
       
-      if (!result.output && !result.error) {
+      if (!result.stdout && !result.stderr) {
         outputLines.push("Program executed successfully with no output");
       }
 

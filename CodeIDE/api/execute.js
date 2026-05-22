@@ -15,21 +15,18 @@ export default async function handler(req, res) {
   try {
     const { language, code, stdin } = req.body;
 
-    // Call JDoodle API
-    const jdoodleRes = await fetch('https://api.jdoodle.com/v1/execute', {
+    // Call OneCompiler API (no auth needed)
+    const onecompilerRes = await fetch('https://api.onecompiler.com/api/v1/code/exec', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        clientId: 'd8c13286d7e3d33d8c13286d7e3d33d',
-        clientSecret: 'e2157a97d2eb3e8f1a9d2eb3e8f1a9d2eb3e8f1a9d2eb3e8f',
-        script: code,
         language: language,
-        stdin: stdin || '',
-        versionIndex: '0'
+        code: code,
+        stdin: stdin || ''
       })
     });
 
-    const data = await jdoodleRes.json();
+    const data = await onecompilerRes.json();
     return res.status(200).json(data);
   } catch (error) {
     console.error('Execution error:', error);
