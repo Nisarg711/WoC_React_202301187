@@ -18,13 +18,13 @@ export default async function handler(req, res) {
     // Map language to Wandbox compiler ID
     const compilerMap = {
       'python': 'python3',
-      'javascript': 'nodejs',
+      'javascript': 'node-head',
       'cpp': 'clang-head',
       'c': 'clang-head',
       'java': 'openjdk-head',
       'bash': 'bash',
-      'kotlin': 'kotlin',
-      'typescript': 'nodejs'
+      'kotlin': 'kotlin-head',
+      'typescript': 'node-head'
     };
 
     const compiler = compilerMap[language] || 'python3';
@@ -45,8 +45,8 @@ export default async function handler(req, res) {
     
     // Transform Wandbox response to match our format
     const result = {
-      stdout: data.program_output || '',
-      stderr: data.compiler_error || data.error || ''
+      stdout: data.program_output || data.output || '',
+      stderr: data.compiler_error || data.error || data.compiler_message || ''
     };
     
     return res.status(200).json(result);
